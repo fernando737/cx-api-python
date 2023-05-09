@@ -47,15 +47,17 @@ def get_projects():
 def get_project_id_by_name(project_name):
     projects = get_projects()
     for project in projects:
-        if project["name"] == project_name:
+        if project["name"].lower() == project_name.lower():
             return project["id"]
     return None
     
 # Function to get application ID by name
 def get_application_id_by_name(application_name):
     applications = get_applications()
+    print("Applications:", applications)  # Add this line to print the applications variable
+    
     for application in applications:
-        if application["name"] == application_name:
+        if application["name"].lower() == application_name.lower():  # Convert both names to lowercase before comparing
             return application["id"]
     return None
 
@@ -63,7 +65,9 @@ def get_application_id_by_name(application_name):
 def get_applications():
     url = f"{base_url}/applications"
     response = requests.get(url, headers=headers)
-    return response.json()
+
+    json_response = response.json()
+    return json_response['applications']  # Return the list of applications
     
 # Function to create a project
 def create_project(project_name):
