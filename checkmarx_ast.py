@@ -77,6 +77,16 @@ def update_project_group(project_id, group_id):
     response = requests.put(url, headers=headers, data=json.dumps(data))
     return response.json()
 
+# Function to get projects by application name
+def get_projects_by_application_name(application_name):
+    application_id = get_application_id_by_name(application_name)
+    if application_id is None:
+        return None
+
+    projects = get_projects()
+    associated_projects = [project for project in projects if project["applicationId"] == application_id]
+    return associated_projects
+
 def main(args):
     api_key = input("Please enter your API key: ")
     headers["Authorization"] = f"Bearer {api_key}"
@@ -109,7 +119,7 @@ def main(args):
         updated_project = update_project_group(args.project_id, args.update_project_group)
         print(f"Project updated: {updated_project['id']} - Group: {updated_project['groupId']}")
         
-     if args.get_project_id:
+    if args.get_project_id:
         project_id = get_project_id_by_name(args.get_project_id)
         if project_id:
             print(f"Project ID: {project_id}")
@@ -120,6 +130,14 @@ def main(args):
         application_id = get_application_id_by_name(args.get_application_id)
         if application_id:
             print(f"Application ID: {application_id}")
+        else:
+            print("Application not found")
+
+    if args.get_projects_by_application:
+        projects = get_projects_by_application_name(args.get_projects_by_application)
+        if projects is not None:
+            for project in projects:
+                print(f"Project ID: {project['id']}, Project Name: {project['name']}")
         else:
             print("Application not found")
 
@@ -134,7 +152,8 @@ if __name__ == "__main__":
     parser.add_argument("--project-id", metavar="ID", help="Project ID for specific operations")
     parser.add_argument("--scan-id", metavar="ID", help="Scan ID to get results")
     parser.add_argument("--get-project-id", metavar="NAME", help="Get project ID using project name")
-    parser.add_argument("--get-application-id", metavar="NAME", help="Get application ID using application name"
+    parser.add_argument("--get-application-id", metavar="NAME", help="Get application ID using application name")
+    parser.add_argument("--get-projects-by-application", metavar="NAME", help="Get all projects associated with an application name")
 
     args = parser.parse_args()
     main(args)

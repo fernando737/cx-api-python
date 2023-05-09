@@ -21,6 +21,7 @@ To use the script, run it with the desired command line arguments. The script su
 - `--scan-id ID`: The scan ID to get results.
 - `--get-project-id NAME`: Get project ID using project name.
 - `--get-application-id NAME`: Get application ID using application name.
+- `-get-projects-by-application NAME` Get all projects associated with an application name.
 
 ## Examples
 
@@ -43,8 +44,11 @@ python checkmarx_ast.py --get-scan-results --scan-id SCAN_ID
 python checkmarx_ast.py --update-project-group NEW_GROUP_ID --project-id PROJECT_ID
 
 - Get an project ID using the project name
-python checkmarx_script.py --get-project-id "Project Name"
+python checkmarx_ast.py --get-project-id "Project Name"
 
 - Get an application ID using the application name
-python checkmarx_script.py --get-project-id "Project Name"
+python checkmarx_ast.py --get-project-id "Project Name"
+
+- Get all projects associated with an application name
+python checkmarx_ast.py --get-projects-by-application "Application Name"
 
