@@ -25,7 +25,7 @@ To use the script, run it with the desired command line arguments. The script su
 
 ## Examples
 
-- Get projects
+- Get projects (tested)
 `python checkmarx_ast.py --get-projects`
 
 - Create a new project

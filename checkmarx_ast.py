@@ -80,10 +80,28 @@ def create_project(project_name):
 
 # Function to upload a file to a project
 def upload_file(project_id, file_path):
-    url = f"{base_url}/projects/{project_id}/source"
+    url = f"{base_url}/projects/{project_id}/sourceCode"
+
     with open(file_path, "rb") as file:
         response = requests.post(url, headers=headers, files={"file": file})
+    
+    if not response.ok:
+        print("Error uploading file:")
+        print(response.text)  # Print the response text to see what it contains
+        response.raise_for_status()
+    
     return response.json()
+
+def upload_file_to_presigned_url(presigned_url, file_path):
+    with open(file_path, 'rb') as file:
+        response = requests.put(presigned_url, data=file, headers={"accept": "application/json"})
+
+    if response.status_code == 200:
+        print("File uploaded successfully.")
+    else:
+        print(f"Error uploading file: {response.status_code} {response.text}")
+
+    return response
 
 # Function to start a security scan
 def start_scan(project_id):
