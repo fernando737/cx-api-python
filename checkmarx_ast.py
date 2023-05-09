@@ -3,7 +3,8 @@ import json
 import argparse
 
 # Configuration
-base_url = "https://eu.ast.checkmarx.net"
+base_url = "https://eu.ast.checkmarx.net/api"
+
 headers = {
     "Content-Type": "application/json"
 }
@@ -38,7 +39,9 @@ def get_access_token(tenant_name, api_key):
 def get_projects():
     url = f"{base_url}/projects"
     response = requests.get(url, headers=headers)
-    return response.json()
+
+    json_response = response.json()
+    return json_response['projects']  # Return the list of projects
     
 # Function to get project ID by name
 def get_project_id_by_name(project_name):
@@ -183,6 +186,5 @@ if __name__ == "__main__":
     parser.add_argument("--get-project-id", metavar="NAME", help="Get project ID using project name")
     parser.add_argument("--get-application-id", metavar="NAME", help="Get application ID using application name")
     parser.add_argument("--get-projects-by-application", metavar="NAME", help="Get all projects associated with an application name")
-
     args = parser.parse_args()
     main(args)
