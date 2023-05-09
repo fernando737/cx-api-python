@@ -54,7 +54,6 @@ def get_project_id_by_name(project_name):
 # Function to get application ID by name
 def get_application_id_by_name(application_name):
     applications = get_applications()
-    print("Applications:", applications)  # Add this line to print the applications variable
     
     for application in applications:
         if application["name"].lower() == application_name.lower():  # Convert both names to lowercase before comparing
@@ -79,29 +78,21 @@ def create_project(project_name):
     return response.json()
 
 # Function to upload a file to a project
-def upload_file(project_id, file_path):
-    url = f"{base_url}/projects/{project_id}/sourceCode"
+def request_upload_url():
+    url = f"{base_url}/uploads"
+    response = requests.post(url, headers=headers)
+    return response.json()['url']
 
-    with open(file_path, "rb") as file:
-        response = requests.post(url, headers=headers, files={"file": file})
-    
-    if not response.ok:
-        print("Error uploading file:")
-        print(response.text)  # Print the response text to see what it contains
-        response.raise_for_status()
-    
-    return response.json()
-
-def upload_file_to_presigned_url(presigned_url, file_path):
+def upload_and_scan_file_to_presigned_url(file_path,project_id):
+    presigned_url = request_upload_url()
     with open(file_path, 'rb') as file:
-        response = requests.put(presigned_url, data=file, headers={"accept": "application/json"})
-
-    if response.status_code == 200:
-        print("File uploaded successfully.")
+       response_upload = requests.put(presigned_url, data=file)
+    
+    if response_upload.status_code == 200:
+       print("File uploaded successfully.")
     else:
-        print(f"Error uploading file: {response.status_code} {response.text}")
-
-    return response
+       print(f"Error uploading file: {response_upload.status_code} {response_upload.text}")
+    return response_upload
 
 # Function to start a security scan
 def start_scan(project_id):
@@ -156,7 +147,7 @@ def main(args):
         print(f"Project created: {new_project['id']} - {new_project['name']}")
 
     if args.upload_file and args.project_id:
-        upload_response = upload_file(args.project_id, args.upload_file)
+        upload_response = upload_and_scan_file_to_presigned_url( args.upload_file,args.project_id,)
         print("File uploaded:", upload_response)
 
     if args.start_scan and args.project_id:
