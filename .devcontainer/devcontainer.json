@@ -1,0 +1,15 @@
+{
+    "name": "Python Dev Container",
+    "build": {
+      "dockerfile": "Dockerfile"
+    },
+    "runArgs": ["-u", "node"],
+    "settings": {
+      "terminal.integrated.shell.linux": "/bin/bash",
+      "python.pythonPath": "/usr/local/bin/python",
+      "python.linting.pylintEnabled": true,
+      "python.linting.enabled": true
+    },
+    "extensions": ["ms-python.python"]
+}
+  
