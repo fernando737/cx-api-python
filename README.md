@@ -26,29 +26,29 @@ To use the script, run it with the desired command line arguments. The script su
 ## Examples
 
 - Get projects
-python checkmarx_ast.py --get-projects
+`python checkmarx_ast.py --get-projects`
 
 - Create a new project
-python checkmarx_ast.py --create-project "NewProject"
+`python checkmarx_ast.py --create-project "NewProject"`
 
 - Upload a file to a project
-python checkmarx_ast.py --upload-file /path/to/your/file.ext --project-id PROJECT_ID
+`python checkmarx_ast.py --upload-file /path/to/your/file.ext --project-id PROJECT_ID`
 
 - Start a security scan for a project
-python checkmarx_ast.py --start-scan --project-id PROJECT_ID
+`python checkmarx_ast.py --start-scan --project-id PROJECT_ID`
 
 - Get scan results
-python checkmarx_ast.py --get-scan-results --scan-id SCAN_ID
+`python checkmarx_ast.py --get-scan-results --scan-id SCAN_ID`
 
 - Update a project's group
-python checkmarx_ast.py --update-project-group NEW_GROUP_ID --project-id PROJECT_ID
+`python checkmarx_ast.py --update-project-group NEW_GROUP_ID --project-id PROJECT_ID`
 
 - Get an project ID using the project name
-python checkmarx_ast.py --get-project-id "Project Name"
+`python checkmarx_ast.py --get-project-id "Project Name"`
 
 - Get an application ID using the application name
-python checkmarx_ast.py --get-project-id "Project Name"
+`python checkmarx_ast.py --get-project-id "Project Name"`
 
 - Get all projects associated with an application name
-python checkmarx_ast.py --get-projects-by-application "Application Name"
+`python checkmarx_ast.py --get-projects-by-application "Application Name"`
 
