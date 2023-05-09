@@ -3,10 +3,36 @@ import json
 import argparse
 
 # Configuration
-base_url = "https://api.checkmarx.net/ast"
+base_url = "https://eu.ast.checkmarx.net"
 headers = {
     "Content-Type": "application/json"
 }
+
+# Function to get access token
+def get_access_token(tenant_name, api_key):
+    token_url = f"https://eu.iam.checkmarx.net/auth/realms/adidas/protocol/openid-connect/token"
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "application/json"
+    }
+    data = {
+        "grant_type": "refresh_token",
+        "client_id": "ast-app",
+        "refresh_token": api_key
+    }
+    response = requests.post(token_url, headers=headers, data=data)
+
+    # Print the response status code and JSON response for debugging
+    print("Status code:", response.status_code)
+    print("JSON response:", response.json())
+
+    if response.status_code == 200:
+        return response.json()["access_token"]
+    else:
+        raise Exception("Failed to get access token. Please check your credentials and try again.")
+
+
+
 
 # Function to get projects
 def get_projects():
@@ -88,8 +114,11 @@ def get_projects_by_application_name(application_name):
     return associated_projects
 
 def main(args):
+    tenant_name = input("Please enter your tenant name: ")
     api_key = input("Please enter your API key: ")
-    headers["Authorization"] = f"Bearer {api_key}"
+
+    access_token = get_access_token(tenant_name, api_key)
+    headers["Authorization"] = f"Bearer {access_token}"
 
     if args.get_projects:
         projects = get_projects()
