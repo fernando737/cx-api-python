@@ -12,6 +12,7 @@ This Python script allows you to interact with the Checkmarx AST API. You can pe
 To use the script, run it with the desired command line arguments. The script supports the following options:
 
 - `--get-projects`: Retrieve the list of projects.
+- `--get-project-groups NAME`: Retrieve the list of groups asociated to project.
 - `--create-project NAME`: Create a new project with the given name.
 - `--upload-file FILE`: Upload a file to a project. Requires the `--project-id` argument.
 - `--start-scan`: Start a security scan for a project. Requires the `--project-id` argument.
@@ -25,11 +26,14 @@ To use the script, run it with the desired command line arguments. The script su
 
 ## Examples
 
-- Get projects (tested)
+- Get projects (TESTED)
 `python checkmarx_ast.py --get-projects`
 
-- Create a new project
+- Create a new project (TESTED)
 `python checkmarx_ast.py --create-project "NewProject"`
+
+- Get groups of project (TESTED)
+`python checkmarx_ast.py --get-project-groups NAME`
 
 - Upload a file to a project
 `python checkmarx_ast.py --upload-file /path/to/your/file.ext --project-id PROJECT_ID`

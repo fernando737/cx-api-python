@@ -4,6 +4,7 @@ import argparse
 
 # Configuration
 base_url = "https://eu.ast.checkmarx.net/api"
+base_url_auth = "https://eu.ast.checkmarx.net/auth"
 
 headers = {
     "Content-Type": "application/json"
@@ -44,9 +45,23 @@ def get_projects():
     return json_response['projects']  # Return the list of projects
     
 # Function to get project ID by name
-def get_project_id_by_name(project_name):
+#++++++++++++++++++++++++++++++++++++
+#++++++++++++++++++++++++++++++++++++
+def get_project_id(project_name):
     projects = get_projects()
     for project in projects:
+        print(project["name"])
+        print("----"+project_name)
+        if project["name"] == project_name:
+            return project["id"]
+    return None
+
+# Function to get project ID by name
+def get_groups_by_project(project_name):
+    projects = get_projects()
+    for project in projects:
+        print(project["name"])
+        print(project["groups"])
         if project["name"].lower() == project_name.lower():
             return project["id"]
     return None
@@ -56,7 +71,10 @@ def get_application_id_by_name(application_name):
     applications = get_applications()
     
     for application in applications:
-        if application["name"].lower() == application_name.lower():  # Convert both names to lowercase before comparing
+        print(application["name"])
+        print("--------------")
+        print(application_name)
+        if application["name"] == application_name:  # Convert both names to lowercase before comparing
             return application["id"]
     return None
 
@@ -110,13 +128,30 @@ def get_scan_results(scan_id):
     response = requests.get(url, headers=headers)
     return response.json()
 
+# Function to get group ID by name
+def get_group_id(group_name):
+    url = f'{base_url_auth}/groups'
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        groups = response.json()
+        for group in groups:
+            if group['name'].lower() == group_name.lower():
+                print(group['id'])
+                return group['id']
+        print(f"No group found with the name '{group_name}'")
+    else:
+        print(f"Error searching for group '{group_name}': {response.status_code} {response.text}")
+    return None
+
 # Function to update a specific project's group
-def update_project_group(project_id, group_id):
+def update_project_group(project_id, group_name):
     url = f"{base_url}/projects/{project_id}"
     data = {
-        "groupId": group_id
+        "groupId": get_group_id(group_name)
     }
     response = requests.put(url, headers=headers, data=json.dumps(data))
+    print(response.json())
+
     return response.json()
 
 # Function to get projects by application name
@@ -141,10 +176,22 @@ def main(args):
         print("Existing projects:")
         for project in projects:
             print(f"{project['id']} - {project['name']}")
+    
+    if args.get_project_id:
+        project_id = get_project_id(args.get_project_id)
+        print(project_id)
+        if project_id:
+            print(f"Project ID: {project_id}")
+        else:
+            print("Project not found")
 
     if args.create_project:
         new_project = create_project(args.create_project)
         print(f"Project created: {new_project['id']} - {new_project['name']}")
+
+    if args.get_groups_by_project:
+        groups = get_groups_by_project(args.get_groups_by_project)
+        print(f"Project groups: {groups}")
 
     if args.upload_file and args.project_id:
         upload_response = upload_and_scan_file_to_presigned_url( args.upload_file,args.project_id,)
@@ -164,12 +211,7 @@ def main(args):
         updated_project = update_project_group(args.project_id, args.update_project_group)
         print(f"Project updated: {updated_project['id']} - Group: {updated_project['groupId']}")
         
-    if args.get_project_id:
-        project_id = get_project_id_by_name(args.get_project_id)
-        if project_id:
-            print(f"Project ID: {project_id}")
-        else:
-            print("Project not found")
+    
 
     if args.get_application_id:
         application_id = get_application_id_by_name(args.get_application_id)
@@ -189,6 +231,8 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Interact with Checkmarx AST API")
     parser.add_argument("--get-projects", action="store_true", help="Get projects")
+    parser.add_argument("--get-project-id", metavar="NAME", help="Get project ID using project name")
+    parser.add_argument("--get-groups-by-project", metavar="NAME", help="Get project groups")
     parser.add_argument("--create-project", metavar="NAME", help="Create a new project")
     parser.add_argument("--upload-file", metavar="FILE", help="Upload a file to the project (requires --project-id)")
     parser.add_argument("--start-scan", action="store_true", help="Start a security scan (requires --project-id)")
@@ -196,7 +240,6 @@ if __name__ == "__main__":
     parser.add_argument("--update-project-group", metavar="GROUP_ID", help="Update a specific project's group (requires --project-id)")
     parser.add_argument("--project-id", metavar="ID", help="Project ID for specific operations")
     parser.add_argument("--scan-id", metavar="ID", help="Scan ID to get results")
-    parser.add_argument("--get-project-id", metavar="NAME", help="Get project ID using project name")
     parser.add_argument("--get-application-id", metavar="NAME", help="Get application ID using application name")
     parser.add_argument("--get-projects-by-application", metavar="NAME", help="Get all projects associated with an application name")
     args = parser.parse_args()
