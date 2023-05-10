@@ -40,7 +40,7 @@ def get_access_token(tenant_name, api_key):
     response = requests.post(token_url, headers=headers, data=data)
 
     if response.status_code == 200:
-        print("Access token retrieved successfully.")
+        print("[DONE] Access token retrieved successfully.")
         return response.json()["access_token"]
     else:
         raise Exception("Failed to get access token. Please check your credentials and try again.")
@@ -79,7 +79,10 @@ def get_project_by_id(project_id):
 def get_project_groups_by_id(project_id):
     project = get_project_by_id(project_id)
     if project:
-        return project["groups"]
+        if len(project['groups']) == 0:
+            return 0
+        else:
+            return project["groups"]
     else:
         return None
     
@@ -88,7 +91,10 @@ def get_project_groups_by_id(project_id):
 def get_project_groups_by_name(project_name):
     project = get_project_by_name(project_name)
     if project:
-        return project["groups"]
+        if len(project['groups']) == 0:
+            return 0
+        else:
+            return project["groups"]
     else:
         return None
 
@@ -126,13 +132,58 @@ def get_application_by_id(application_id):
 def get_application_projects_by_name(application_name):
     application = get_application_by_name(application_name)
     projects = []
-    for project_id in application["projectIds"]:
-        project_name = get_project_by_id(project_id)
-        projects.append({"id" : project_id,
-                        "name" : project_name['name']})
-    if application["projectIds"] is None:
+    if application:
+        if len(application["projectIds"]) == 0:
+            return 0
+        else:
+            for project_id in application["projectIds"]:
+                project_name = get_project_by_id(project_id)
+                projects.append({"id" : project_id,
+                                "name" : project_name['name']})
+            return projects
+    else:
         return None
-    return projects
+
+# Function to get projects by application id
+# [### --get-application-projects-by-id ###]]
+def get_application_projects_by_id(application_id):
+    application = get_application_by_id(application_id)
+    projects = []
+    if application:
+        if len(application["projectIds"]) == 0:
+            return 0
+        else:
+            for project_id in application["projectIds"]:
+                project_name = get_project_by_id(project_id)
+                projects.append({"id" : project_id,
+                                "name" : project_name['name']})
+            return projects
+    else:
+        return None
+
+# Function to update a specific project's group
+# [### --update-project-group-by-name ###]
+def update_project_group_by_id(project_id, group_id):
+    project = get_project_by_id(project_id)
+    if project:
+        print(f"[INFO] Current groups {project['groups']}")
+        project['groups'].append(group_id)
+        project = update_project(project)
+        if project:
+            return project
+        else:
+            return 0
+    else:
+        None
+
+def update_project(project):
+    url = f"{base_url}/projects/{project['id']}"
+    response = requests.put(url, headers=headers, data=json.dumps(project))
+    if response.status_code == 204:
+        project = get_project_by_id(project['id'])
+        return project
+    else:
+        return None
 
 
 
@@ -181,31 +232,7 @@ def get_scan_results(scan_id):
     response = requests.get(url, headers=headers)
     return response.json()
 
-# Function to get group ID by name
-def get_group_id(group_name):
-    url = f'{base_url_auth}/groups'
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        groups = response.json()
-        for group in groups:
-            if group['name'].lower() == group_name.lower():
-                print(group['id'])
-                return group['id']
-        print(f"No group found with the name '{group_name}'")
-    else:
-        print(f"Error searching for group '{group_name}': {response.status_code} {response.text}")
-    return None
 
-# Function to update a specific project's group
-def update_project_group(project_id, group_name):
-    url = f"{base_url}/projects/{project_id}"
-    data = {
-        "groupId": get_group_id(group_name)
-    }
-    response = requests.put(url, headers=headers, data=json.dumps(data))
-    print(response.json())
-
-    return response.json()
 
 
 
@@ -226,7 +253,7 @@ def main(args):
                 print(f"{project['id']} - {project['name']}")
             print(f"Existing projects : {len(projects)}")
         else:
-            print("No projects found")
+            print("[ERROR] No projects found")
 
 # [### --get-project-by-name ###]
     if args.get_project_by_name:
@@ -234,7 +261,7 @@ def main(args):
         if project:
             print(project['id'])
         else:
-            print("Project not found")
+            print(f"[ERROR] Project '{args.get_project_by_name}' was not found")
 
 # [### --get-project-by-id ###]
     if args.get_project_by_id:
@@ -242,23 +269,28 @@ def main(args):
         if project:
             print(project['name'])
         else:
-            print("Project not found")
+            print(f"[ERROR] Project '{args.get_project_by_id}' was not found")
 
 # [### --get-project-groups-by-id ###]
     if args.get_project_groups_by_id:
         groups = get_project_groups_by_id(args.get_project_groups_by_id)
-        if groups:
+        if groups == 0:
+            print(f"[ERROR] Project '{args.get_project_groups_by_id}' was found BUT no groups are associated")
+        elif groups:
             print(f"{groups}")
         else:
-            print("No groups associated with this project")
+            print(f"[ERROR] Project '{args.get_project_groups_by_id}' was not found")
+
 
 # [### --get-project-groups-by-name ###]
     if args.get_project_groups_by_name:
         groups = get_project_groups_by_name(args.get_project_groups_by_name)
-        if groups:
+        if groups == 0:
+            print(f"[ERROR] Project '{args.get_project_groups_by_name}' was found BUT no groups are associated")
+        elif groups:
             print(f"{groups}")
         else:
-            print("No groups associated with this project")
+            print(f"[ERROR] Project '{args.get_project_groups_by_name}' was not found")
 
 # [### --get-applications ###]
     if args.get_applications:
@@ -266,9 +298,9 @@ def main(args):
         if applications:
             for application in applications:
                 print(f"{application['id']} - {application['name']}")
-            print(f"Existing applications : {len(applications)}")
+            print(f"[DONE] Existing applications : {len(applications)}")
         else:
-            print("No applications found")
+            print("[ERROR] No applications was found")
 
 # [### --get-application-by-name ###]
     if args.get_application_by_name:
@@ -276,7 +308,7 @@ def main(args):
         if application:
             print(application['id'])
         else:
-            print("Application not found")
+            print(f"[ERROR] Application was not found for name {args.get_application_by_name}")
 
 # [### --get-application-by-id ###]
     if args.get_application_by_id:
@@ -284,7 +316,7 @@ def main(args):
         if application:
             print(application['name'])
         else:
-            print("Application not found")
+            print(f"[ERROR] Application was not found for id {args.get_application_by_id}")
 
 # [### --get-application-projects-by-name ###]
     if args.get_application_projects_by_name:
@@ -302,13 +334,52 @@ def main(args):
         spinner_thread.join()
         sys.stdout.write('\r')
         sys.stdout.flush()
-        
-        if projects is not None:
+
+        if projects == 0:
+            print(f"[ERROR] Application '{args.get_application_projects_by_name}' was found BUT NO projects are associated")
+        elif projects:
             for project in projects:
                 print(f"{project['id']} - {project['name']}")
-            print(f"Projects associated to application '{args.get_application_projects_by_name}' : {len(projects)}")
+            print(f"[DONE] Projects associated to application '{args.get_application_projects_by_name}' : {len(projects)}")
         else:
-            print(f"Projects not found in application '{args.get_application_projects_by_name}'")
+            print(f"[ERROR] Application '{args.get_application_projects_by_name}' was not found")
+
+# [### --get-application-projects-by-id ###]
+    if args.get_application_projects_by_id:
+
+        # Start spinner
+        stop_spinner = threading.Event()
+        spinner_thread = threading.Thread(target=spinner, args=(stop_spinner,))
+        spinner_thread.start()
+
+        # Run the long-running task
+        projects = get_application_projects_by_id(args.get_application_projects_by_id)
+       
+       # Stop spinner
+        stop_spinner.set()
+        spinner_thread.join()
+        sys.stdout.write('\r')
+        sys.stdout.flush()
+
+        if projects == 0:
+            print(f"[ERROR] Application '{args.get_application_projects_by_id}' was found BUT NO projects are associated")
+        elif projects:
+            for project in projects:
+                print(f"{project['id']} - {project['name']}")
+            print(f"[DONE] Projects associated to application '{args.get_application_projects_by_id}' : {len(projects)}")
+        else:
+            print(f"[ERROR] Application '{args.get_application_projects_by_id}' was not found")
+
+# [### --update-project-group-by-name ###]
+    if args.update_project_group_by_id and args.project_id:
+        project = update_project_group_by_id(args.project_id, args.update_project_group_by_id)
+        if project == 0:
+            print(f"[ERROR] Project '{args.project_id}' was found BUT NOT possible to add the group id {args.update_project_group_by_id}")
+        elif project:
+            print(f"[DONE] Successful update now the project '{args.project_id}' its associated with groups '{project['groups']}'")
+        else:
+            print(f"[ERROR] Project '{args.project_id}' was not found")
+    
 
 
 
@@ -333,9 +404,6 @@ def main(args):
         for result in scan_results:
             print(f"{result['severity']}: {result['name']} - {result['description']}")
 
-    if args.update_project_group and args.project_id:
-        updated_project = update_project_group(args.project_id, args.update_project_group)
-        print(f"Project updated: {updated_project['id']} - Group: {updated_project['groupId']}")
     
     
     
@@ -358,12 +426,14 @@ if __name__ == "__main__":
     parser.add_argument("--get-application-projects-by-id", metavar="ID", help="Get groups associated to application using application id")
 
 
+    parser.add_argument("--update-project-group-by-id", metavar="GROUP_ID", help="Update a specific project's group (requires --project-id)")
+
     parser.add_argument("--create-project", metavar="NAME", help="Create a new project")
     parser.add_argument("--upload-file", metavar="FILE", help="Upload a file to the project (requires --project-id)")
     parser.add_argument("--start-scan", action="store_true", help="Start a security scan (requires --project-id)")
     parser.add_argument("--get-scan-results", action="store_true", help="Get scan results (requires --scan-id)")
     
-    parser.add_argument("--update-project-group", metavar="GROUP_ID", help="Update a specific project's group (requires --project-id)")
+    
     parser.add_argument("--project-id", metavar="ID", help="Project ID for specific operations")
     parser.add_argument("--scan-id", metavar="ID", help="Scan ID to get results")
   
