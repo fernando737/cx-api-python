@@ -24,10 +24,6 @@ def get_access_token(tenant_name, api_key):
     }
     response = requests.post(token_url, headers=headers, data=data)
 
-    # Print the response status code and JSON response for debugging
-    print("Status code:", response.status_code)
-    print("JSON response:", response.json())
-
     if response.status_code == 200:
         return response.json()["access_token"]
     else:
@@ -39,8 +35,11 @@ def get_access_token(tenant_name, api_key):
 # Function to get projects
 def get_projects():
     url = f"{base_url}/projects"
-    response = requests.get(url, headers=headers)
-
+    params = {
+        "offset" : "0",
+        "limit" : "0",
+    }
+    response = requests.get(url, params=params)
     json_response = response.json()
     return json_response['projects']  # Return the list of projects
     
