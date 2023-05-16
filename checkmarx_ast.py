@@ -4,6 +4,7 @@ import argparse
 import sys
 import time
 import threading
+from requests.exceptions import HTTPError
 
 def spinner(stop_spinner):
     spinner_chars = ['-', '\\', '|', '/']
@@ -58,20 +59,32 @@ def get_projects():
 # Function to get project  by name
 # [### --get-projects-by-name ###]
 def get_project_by_name(project_name):
-    projects = get_projects()
-    for project in projects:
-        if project["name"].lower() == project_name.lower():  # Convert both names to lowercase before comparing
-            return project
-    return None
-
+    url = f"{base_url}/projects"
+    params = {
+        "offset" : "0",
+        "limit" : "0",
+        "name" : project_name
+    }
+    try:
+        response = requests.get(url,params=params,headers=headers)
+        return response.json()['projects'][0]  # Return the list of projects
+    except HTTPError as e:
+        return None
+    
 # Function to get project  by id
 # [### --get-project-by-id ###]
 def get_project_by_id(project_id):
-    projects = get_projects()
-    for project in projects:
-        if project["id"].lower() == project_id.lower():  # Convert both names to lowercase before comparing
-            return project
-    return None
+    url = f"{base_url}/projects/"
+    params = {
+        "offset" : "0",
+        "limit" : "1",
+        "ids" : project_id
+    }
+    try:
+        response = requests.get(url,params=params,headers=headers)
+        return response.json()['projects'][0]  # Return the list of projects
+    except HTTPError as e:
+        return None
 
 # Function to get project groups by id
 # [### --get-project-groups-by-id ###]
@@ -111,20 +124,31 @@ def get_applications():
 # Function to get application ID by name
 # [### --get-application-by-name ###]
 def get_application_by_name(application_name):
-    applications = get_applications()
-    for application in applications:
-        if application["name"].lower() == application_name.lower():  # Convert both names to lowercase before comparing
-            return application
-    return None
+    url = f"{base_url}/applications"
+    params = {
+        "offset" : "0",
+        "limit" : "1",
+        "name" : application_name
+    }
+    try:
+        response = requests.get(url,params=params,headers=headers)
+        return response.json()['applications'][0]  # Return the list of applications
+    except HTTPError as e:
+        return None
 
 # Function to get application NAME by id
 # [### --get-application-by-id ###]
 def get_application_by_id(application_id):
-    applications = get_applications()
-    for application in applications:
-        if application["id"].lower() == application_id.lower():  # Convert both names to lowercase before comparing
-            return application
-    return None
+    url = f"{base_url}/applications/{application_id}"
+    params = {
+        "offset" : "0",
+        "limit" : "1",
+    }
+    try:
+        response = requests.get(url,params=params,headers=headers)
+        return response.json() # Return the application
+    except HTTPError as e:
+        return None
 
 # Function to get projects by application name
 # [### --get-application-projects-by-name ###]]
@@ -185,23 +209,45 @@ def update_project(project):
         return project
     else:
         return None
+def get_latest_scan_result(project_id):
+    # Get the latest scan result for the specified project
+    try:
+        last_scan_url = f"{base_url}/projects/{project_id}/last-scan"
+        last_scan_response = requests.get(last_scan_url, headers=headers)
+        print(last_scan_response)
+        last_scan_response.raise_for_status()
+    except HTTPError as e:
+        last_scan_response = None
+    return last_scan_response
 
-# Function to get last scan results
-def get_last_scan_results(project_id):
-    url = f"{base_url}/projects/{project_id}/scans"
-    params = {
-        "offset" : "0",
-        "limit" : "1",
-    }
-    response = requests.get(url, headers=headers, params=params)
-    return response.json()['scans'][0]  # Return the list of applications
+# Function to check the progress of sast coverage of an Application
+# [### --get-application-progress-sast-by-name ###]
+def get_application_progress_sast_by_name(application_name):
+    # Get the application ID based on the application name
+    application = get_application_by_name(application_name)
+    application_id = application["id"]
+    if application_id:
+        # Get all projects for the specified application
+        projects = get_application_projects_by_id(application_id)
 
-# Function to check the progress of an Application
-# [### --get-application-progress ###]
-def get_application_progress(application_id):
-    return None
+        # Track the number of projects with completed scans
+        projects_with_scans = 0
 
-
+        # Check the status of the latest scan for each project
+        for project in projects:
+            project_id = project["id"]
+            print(f"Project Name: {project['name']} - Project ID: {project_id}")
+            latest_scan_result = get_latest_scan_result(project_id)
+            print(latest_scan_result)
+            if latest_scan_result:
+                if latest_scan_result["status"] == "Completed":
+                    projects_with_scans += 1
+        # Calculate the percentage of projects with completed scans
+        progress_percentage = (projects_with_scans / len(projects)) * 100
+        print(progress_percentage)
+        return progress_percentage
+    else:
+        return None
 
 # Function to create a project
 def create_project(project_name):
@@ -393,6 +439,14 @@ def main(args):
         else:
             print(f"[ERROR] Project '{args.project_id}' was not found")
 
+# [### --get-application-progress-sast-by-name ###]
+    if args.get_application_progress_sast_by_name:
+        progress = get_application_progress_sast_by_name(args.get_application_progress_sast_by_name)
+        print(progress)
+        if progress:
+            print(f"[DONE] Application '{args.get_application_progress_sast_by_name}' have a progress of '{progress}'")
+        else:
+            print(f"[ERROR] Application '{args.get_application_progress_sast_by_name}' was not found")
 
     if args.create_project:
         new_project = create_project(args.create_project)
@@ -435,7 +489,7 @@ if __name__ == "__main__":
     
     parser.add_argument("--get-application-projects-by-name", metavar="NAME", help="Get groups associated to application using application name")
     parser.add_argument("--get-application-projects-by-id", metavar="ID", help="Get groups associated to application using application id")
-
+    parser.add_argument("--get-application-progress-sast-by-name", metavar="NAME", help="Get progress of application using application name")
 
     parser.add_argument("--update-project-group-by-id", metavar="GROUP_ID", help="Update a specific project's group (requires --project-id)")
 
