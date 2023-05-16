@@ -14,7 +14,6 @@ def spinner(stop_spinner):
         i += 1
         time.sleep(0.1)
 
-
 # Configuration
 base_url = "https://eu.ast.checkmarx.net/api"
 base_url_auth = "https://eu.ast.checkmarx.net/auth"
@@ -27,7 +26,7 @@ headers = {
 
 # Function to get access token
 def get_access_token(tenant_name, api_key):
-    token_url = f"https://eu.iam.checkmarx.net/auth/realms/adidas/protocol/openid-connect/token"
+    token_url = f"https://eu.iam.checkmarx.net/auth/realms/{tenant_name}/protocol/openid-connect/token"
     headers = {
         "Content-Type": "application/x-www-form-urlencoded",
         "Accept": "application/json"
@@ -162,7 +161,7 @@ def get_application_projects_by_id(application_id):
         return None
 
 # Function to update a specific project's group
-# [### --update-project-group-by-name ###]
+# [### --update-project-group-by-id ###]
 def update_project_group_by_id(project_id, group_id):
     project = get_project_by_id(project_id)
     if project:
@@ -176,6 +175,8 @@ def update_project_group_by_id(project_id, group_id):
     else:
         None
 
+# Function to update a specific project's group
+# [### Auxiliary function ###]
 def update_project(project):
     url = f"{base_url}/projects/{project['id']}"
     response = requests.put(url, headers=headers, data=json.dumps(project))
@@ -185,8 +186,20 @@ def update_project(project):
     else:
         return None
 
+# Function to get last scan results
+def get_last_scan_results(project_id):
+    url = f"{base_url}/projects/{project_id}/scans"
+    params = {
+        "offset" : "0",
+        "limit" : "1",
+    }
+    response = requests.get(url, headers=headers, params=params)
+    return response.json()['scans'][0]  # Return the list of applications
 
-
+# Function to check the progress of an Application
+# [### --get-application-progress ###]
+def get_application_progress(application_id):
+    return None
 
 
 
@@ -379,8 +392,6 @@ def main(args):
             print(f"[DONE] Successful update now the project '{args.project_id}' its associated with groups '{project['groups']}'")
         else:
             print(f"[ERROR] Project '{args.project_id}' was not found")
-    
-
 
 
     if args.create_project:

@@ -22,8 +22,10 @@ To use the script, run it with the desired command line arguments. The script su
 - `--get-application-by-id ID`: Get application NAME using application id.
 - `--get-application-projects-by-name NAME` Get all projects associated with an application name.
 - `--get-application-projects-by-id ID` Get all projects associated with an application id.
+- `--get-application-progress-sast-by-name NAME` Get application sast progress using application name.
 
 - `--update-project-group GROUP_NAME`: Update a specific project's group. Requires the `--project-id` argument.
+
 
 - `--create-project NAME`: Create a new project with the given name.
 - `--upload-file FILE`: Upload a file to a project. Requires the `--project-id` argument.
@@ -66,21 +68,9 @@ To use the script, run it with the desired command line arguments. The script su
 - Get application projects using application ID (TESTED)
 `python checkmarx_ast.py --get-application-projects-by-id "ID"`
 
-
+- Get application sast progress using application NAME
+`python checkmarx_ast.py --get-application-progress-sast-by-name "NAME"` 
 
 - Update project group using project ID (TESTED)
-`python checkmarx_ast.py --update-project-group-by-name "NAME" --project-id "ID"`
+`python checkmarx_ast.py --update-project-group-by-id "ID" --project-id "ID"`
 
-
-
-- Create a new project
-`python checkmarx_ast.py --create-project "NewProject"`
-
-- Upload a file to a project
-`python checkmarx_ast.py --upload-file /path/to/your/file.ext --project-id PROJECT_ID`
-
-- Start a security scan for a project
-`python checkmarx_ast.py --start-scan --project-id PROJECT_ID`
-
-- Get scan results
-`python checkmarx_ast.py --get-scan-results --scan-id SCAN_ID`
