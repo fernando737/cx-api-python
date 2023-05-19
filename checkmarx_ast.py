@@ -397,11 +397,16 @@ def main(args):
 # [### --get-applications ###]
     if args.get_applications:
         applications = get_applications()
+        counter = 0
+        data = []
         if applications:
             for application in applications:
                 progress = get_application_progress_sast_by_name(application['name'])
-                print(f"{application['id']} - {application['name']} - {progress}")
-            print(f"[DONE] Existing applications : {len(applications)}")
+                data.append({"id": application['id'], "name": application['name'], "progress": progress})            
+            print (f"Existing applications : {len(applications)}")
+             # Create a DataFrame from the data list and write it to a CSV
+            df = pd.DataFrame(data)
+            df.to_csv('applications_data.csv', index=False)
         else:
             print("[ERROR] No applications was found")
 
