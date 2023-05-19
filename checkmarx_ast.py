@@ -132,7 +132,10 @@ def get_application_by_name(application_name):
     }
     try:
         response = requests.get(url,params=params,headers=headers)
-        return response.json()['applications'][0]  # Return the list of applications
+        if len(response.json()['applications']) == 0:
+            return None
+        else:
+            return response.json()['applications'][0]  # Return the list of applications
     except HTTPError as e:
         return None
 
@@ -218,7 +221,7 @@ def get_application_scans_by_id(application_id):
         params = {
             "offset" : "0",
             "limit" : "0",
-            "applicationId" : application_id
+            "application-id" : application_id
         }
         last_scan_response = requests.get(last_scan_url, params=params, headers=headers)
         last_scan_response.raise_for_status()
@@ -232,20 +235,24 @@ def get_application_scans_by_id(application_id):
 def get_application_progress_sast_by_name(application_name):
     # Get the application ID based on the application name
     application = get_application_by_name(application_name)
-    application_id = application["id"]
-
-    application_scans = get_application_scans_by_id(application_id)
-    scanned_projects = 0
-    progress = 0
-    print(application_scans)
-    for uuid, info in application_scans.items():
-        if info["status"] == "Completed":
-            scanned_projects += 1
     
-    progress = (scanned_projects / len(application_scans)) * 100
-    scanned_projects = 0
-    return progress
+    if application:
+        application_id = application["id"]
 
+        application_scans = get_application_scans_by_id(application_id)
+        scanned_projects = 0
+        progress = 0
+        if application_scans != None and len(application_scans.items()) != 0:
+            for uuid, info in application_scans.items():
+                if "status" in info:
+                    if info["status"] == "Completed":
+                        scanned_projects += 1
+            progress = (scanned_projects / len(application_scans.items())) * 100
+        else:
+            progress = 0
+        return progress
+    else:
+        return None
 
 # Function to create a project
 def create_project(project_name):
@@ -354,7 +361,8 @@ def main(args):
         applications = get_applications()
         if applications:
             for application in applications:
-                print(f"{application['id']} - {application['name']}")
+                progress = get_application_progress_sast_by_name(application['name'])
+                print(f"{application['id']} - {application['name']} - {progress}")
             print(f"[DONE] Existing applications : {len(applications)}")
         else:
             print("[ERROR] No applications was found")
