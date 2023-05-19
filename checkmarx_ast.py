@@ -4,6 +4,8 @@ import argparse
 import sys
 import time
 import threading
+import pandas as pd
+
 from requests.exceptions import HTTPError
 
 def spinner(stop_spinner):
@@ -253,6 +255,24 @@ def get_application_progress_sast_by_name(application_name):
         return progress
     else:
         return None
+    
+# Function to check the scan status of a Project
+# [### --get-project-scan-status-by-id ###]
+def get_project_scan_status_by_id(project_id):
+    # Get the latest scan result for the specified project
+    try:
+        last_scan_url = f"{base_url}/projects/last-scan"
+        params = {
+            "offset" : "0",
+            "limit" : "1",
+            "project-ids" : project_id
+        }
+        last_scan_response = requests.get(last_scan_url, params=params, headers=headers)
+        last_scan_response.raise_for_status()
+        return last_scan_response.json() # Return the project
+    except HTTPError as e:
+        last_scan_response = None
+    return last_scan_response
 
 # Function to create a project
 def create_project(project_name):
@@ -312,12 +332,30 @@ def main(args):
 # [### --get-projects ###]
     if args.get_projects:
         projects = get_projects()
+        counter = 0
+        data = []
+
         if projects:
             for project in projects:
-                print(f"{project['id']} - {project['name']}")
-            print(f"Existing projects : {len(projects)}")
+                project_scan = get_project_scan_status_by_id(project['id'])
+                if project_scan: 
+                    status = project_scan[project['id']].get("status", "No scan")
+                else: 
+                    status = "No scan"
+                
+                if status == "Completed": 
+                    counter += 1 
+
+                data.append({"id": project['id'], "name": project['name'], "status": status})
+
+            print(f"Existing projects : {len(projects)}, Scanned projects : {counter}, Percentage : {counter/len(projects)*100}%")
+
+            # Create a DataFrame from the data list and write it to a CSV
+            df = pd.DataFrame(data)
+            df.to_csv('projects_data.csv', index=False)
         else:
             print("[ERROR] No projects found")
+
 
 # [### --get-project-by-name ###]
     if args.get_project_by_name:
