@@ -209,13 +209,20 @@ def update_project(project):
         return project
     else:
         return None
-def get_latest_scan_result(project_id):
+# Function to get scan result for all projects part of application
+# [### Auxiliary function  ###]
+def get_application_scans_by_id(application_id):
     # Get the latest scan result for the specified project
     try:
-        last_scan_url = f"{base_url}/projects/{project_id}/last-scan"
-        last_scan_response = requests.get(last_scan_url, headers=headers)
-        print(last_scan_response)
+        last_scan_url = f"{base_url}/projects/last-scan"
+        params = {
+            "offset" : "0",
+            "limit" : "0",
+            "applicationId" : application_id
+        }
+        last_scan_response = requests.get(last_scan_url, params=params, headers=headers)
         last_scan_response.raise_for_status()
+        return last_scan_response.json() # Return the list of projects
     except HTTPError as e:
         last_scan_response = None
     return last_scan_response
@@ -226,28 +233,19 @@ def get_application_progress_sast_by_name(application_name):
     # Get the application ID based on the application name
     application = get_application_by_name(application_name)
     application_id = application["id"]
-    if application_id:
-        # Get all projects for the specified application
-        projects = get_application_projects_by_id(application_id)
 
-        # Track the number of projects with completed scans
-        projects_with_scans = 0
+    application_scans = get_application_scans_by_id(application_id)
+    scanned_projects = 0
+    progress = 0
+    print(application_scans)
+    for uuid, info in application_scans.items():
+        if info["status"] == "Completed":
+            scanned_projects += 1
+    
+    progress = (scanned_projects / len(application_scans)) * 100
+    scanned_projects = 0
+    return progress
 
-        # Check the status of the latest scan for each project
-        for project in projects:
-            project_id = project["id"]
-            print(f"Project Name: {project['name']} - Project ID: {project_id}")
-            latest_scan_result = get_latest_scan_result(project_id)
-            print(latest_scan_result)
-            if latest_scan_result:
-                if latest_scan_result["status"] == "Completed":
-                    projects_with_scans += 1
-        # Calculate the percentage of projects with completed scans
-        progress_percentage = (projects_with_scans / len(projects)) * 100
-        print(progress_percentage)
-        return progress_percentage
-    else:
-        return None
 
 # Function to create a project
 def create_project(project_name):
@@ -447,6 +445,11 @@ def main(args):
             print(f"[DONE] Application '{args.get_application_progress_sast_by_name}' have a progress of '{progress}'")
         else:
             print(f"[ERROR] Application '{args.get_application_progress_sast_by_name}' was not found")
+
+
+
+
+
 
     if args.create_project:
         new_project = create_project(args.create_project)
