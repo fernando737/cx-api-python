@@ -346,7 +346,7 @@ def main(args):
                 if status == "Completed": 
                     counter += 1 
 
-                data.append({"id": project['id'], "name": project['name'], "status": status})
+                data.append({"id": project['id'], "name": project['name'], "status": status, "group": project['groups']})
 
             print(f"Existing projects : {len(projects)}, Scanned projects : {counter}, Percentage : {counter/len(projects)*100}%")
 
